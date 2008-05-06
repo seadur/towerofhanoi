@@ -7,17 +7,17 @@ Autor:
  - Bruno Santos <bsanto@gmail.com>
  - Bruno Gomes <bgomes@s1solucoes.com.br>
 """
-import sys, pygame
+import pygame
 
-class base:
-    def __init__(self, top=0 , left=0 ,picture="images/base.gif"):
+class Base:
+    def __init__(self, top=0 , left=0, picture="images/base.gif"):
         self.load_picture(picture)
 
     def load_picture(self, new_picture):
         self.picture = pygame.image.load(new_picture)
         self.rect = self.picture.get_rect()
 
-    def move(self,left,top):
+    def move(self, left, top):
         self.rect.top = top
         self.rect.left = left
         
@@ -35,7 +35,7 @@ class base:
     def move_x(self, value):
         self.rect.left = value
 
-    x = property(get_x,move_x)
+    x = property(get_x, move_x)
 
     def get_y(self):
         return(self.rect.top)
@@ -43,7 +43,7 @@ class base:
     def move_y(self, value):
         self.rect.top = value
         
-    y = property(get_y,move_y)
+    y = property(get_y, move_y)
     
     def center(self):
         x = self.x + self.width / 2
@@ -51,7 +51,7 @@ class base:
         return (x, y)
 
 
-class disk(base):
+class Disk(Base):
     """Disco da torre de hanoi
     
     gerencia diamentros, posicao x e y
@@ -59,7 +59,7 @@ class disk(base):
     """
     def __init__(self, diametro, left=0, top=0):
         self.diametro = diametro
-        base.__init__(self, left = left, top = top, picture="images/disk0%s.gif" % self.diametro)
+        Base.__init__(self, left = left, top = top, picture="images/disk0%s.gif" % self.diametro)
 
     def __lt__(self, other):
         return self.diametro < other.diametro
@@ -67,13 +67,13 @@ class disk(base):
     def __repr__(self):
         return "Disk %s instance" % self.diametro
 
-    def load_picture(self,picture=None):
-        base.load_picture(self,"images/disk0%s.gif" %self.diametro)
+    def load_picture(self, picture=None):
+        Base.load_picture(self, "images/disk0%s.gif" %self.diametro)
 
     def hover_picture(self):
-        base.load_picture(self,"images/disk0%s_h.gif" %self.diametro)
+        Base.load_picture(self, "images/disk0%s_h.gif" %self.diametro)
 
-class stack:
+class Stack:
     def __init__(self):
           self.stack = []
 
@@ -105,16 +105,17 @@ class stack:
         for ix in xrange(n):
             print fmt % (n - ix, self.stack[ix])
 
-class torre(stack,base):
+class Torre(Stack, Base):
     def __init__(self, numero, nivel , left = 0, top =0):
-        stack.__init__(self)
-        base.__init__(self,left=left,top=top,picture="images/post.gif")
+        Stack.__init__(self)
+        Base.__init__(self, left=left, top=top, picture="images/post.gif")
         self.numero = numero
         self.nivel = nivel+2
         self.resize()
     
     def resize(self):
-        self.picture = pygame.transform.scale(self.picture, (self.width, self.height * self.nivel))
+        self.picture = pygame.transform.scale(self.picture,
+                                      (self.width, self.height * self.nivel))
         self.picture.convert()
         self.rect = self.picture.get_rect()
 

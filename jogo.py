@@ -1,5 +1,13 @@
+# -*- coding: utf-8 -*-
+# vi:si:et:sw=4:sts=4:ts=4
+
+"""
+by:
+    Bruno dos Santos
+    Bruno Gomes
+"""
 import sys, pygame
-from objects import disk, base, torre
+from objects import Disk, Base, Torre
 from pygame.locals import *
 
 class Hanoi:
@@ -7,7 +15,7 @@ class Hanoi:
     
     Este jogo tem a finalidade de estudo da biblioteca pygame
     """
-    def __init__(self,nivel=4,width=800, height=600,cor = (255, 255, 255) ):
+    def __init__(self, nivel=4, width=800, height=600, cor = (255, 255, 255) ):
         pygame.init()
         self.nivel = nivel
         self.size = width, height
@@ -27,8 +35,8 @@ class Hanoi:
         self.criar_torres(n=3)
         
         print "Adicionando discos na torre do meio"
-        for ndisk in range(self.nivel,-1,-1):
-            self.torres[self.torre_atual].push(disk(ndisk))
+        for ndisk in range(self.nivel, -1, -1):
+            self.torres[self.torre_atual].push(Disk(ndisk))
 
         #Imprimindo objetos na tela
         self.monta_tela()
@@ -41,33 +49,34 @@ class Hanoi:
         self.screen.blit(self.piso.picture, self.piso.rect)
 
         #Exibe torres
-        for t in self.torres:
-            self.screen.blit(t.picture, t.rect)
+        for torre in self.torres:
+            self.screen.blit(torre.picture, torre.rect)
             
-            if t.numero == self.torre_atual:
+            if torre.numero == self.torre_atual:
                 #Seleciona disco da torre atual
                 d = self.torres[self.torre_atual].read()
                 if d:
                     d.hover_picture()
                 
             #Montando discos nas torre
-            self.monta_torre(t)
+            self.monta_torre(torre)
 
         
         pygame.display.flip()
 
     def criar_piso(self):
-        self.piso = base()
+        self.piso = Base()
         #Colocando a base no centro
         self.piso.move((self.size[0] / 2) - (self.piso.width / 2), self.size[1] - self.piso.height)
 
-    def criar_torres(self,n=3):
-        self.torres = [torre(nivel=self.nivel,numero = ntorres) for ntorres in range(n)]
-        for t in self.torres:
+    def criar_torres(self, n=3):
+        self.torres = [Torre(nivel=self.nivel, numero = nt) for nt in range(n)]
+        for torre in self.torres:
             #Dividindo o espaco do piso em n pedacos para as torres
-            left = ((self.piso.width * (2 * t.numero - 2)) - n * t.width + n * self.size[0]) / 6
-            top = self.piso.y - t.height
-            t.move(left, top)
+            left = ((self.piso.width * (2 * torre.numero - 2)) \
+                                      - n * torre.width + n * self.size[0]) / 6
+            top = self.piso.y - torre.height
+            torre.move(left, top)
 
     def monta_torre(self, torre, discos=[]):
         """Monta os discos na torre"""
@@ -79,12 +88,13 @@ class Hanoi:
         #Adiciona os discos na torre
         for d in discos:
             torre.push(d)
-            print "Adicionando: ",d
+            print "Adicionando: %s " % d
 
         ds = torre.stack
+        area = self.piso.y
         for d in ds:
             left = torre.center()[0] - d.width / 2
-            top = self.piso.y - (len(ds) - (len(ds) - ds.index(d) - 1)) * d.height
+            top = area - (len(ds) - (len(ds) - ds.index(d) - 1)) * d.height
             d.move(left, top)
             self.screen.blit(d.picture, d.rect)
 
@@ -95,20 +105,18 @@ class Hanoi:
     def move_torre(self,at):
         self.valida_torre_atual()
         d = self.torres[self.torre_atual].read()
-        print d,self.torres[at].read()
         if d and d < self.torres[at].read() :
             self.torre_atual = at
         else:
             d = self.torres[at].pop()
             self.torres[self.torre_atual].push(d)
 
-    def move_prox_torre(self,at):
+    def move_prox_torre(self, at):
         self.torre_atual += 1
         self.move_torre(at)
 
-    def move_ante_torre(self,at):
+    def move_ante_torre(self, at):
         self.torre_atual -= 1
-        print at,self.torre_atual
         self.move_torre(at)
     
     def seleciona_prox_torre(self):
@@ -123,7 +131,7 @@ class Hanoi:
         if self.torres[self.torre_atual].num_elements == 0:
             self.seleciona_ante_torre()
 
-    def game(self,k):
+    def game(self, k):
         d = self.torres[self.torre_atual].read()
         if d:
             d.load_picture()
@@ -153,6 +161,7 @@ class Hanoi:
                     if event.key == K_RIGHT or event.key == K_LEFT \
                        or event.key == K_UP or event.key == K_DOWN:
                         self.game(event.key)
+
 if __name__ == '__main__':
     game = Hanoi()
     game.run_game()
