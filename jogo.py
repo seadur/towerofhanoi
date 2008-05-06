@@ -7,7 +7,7 @@ by:
     Bruno Gomes
 """
 import sys, pygame
-from objects import Disk, Base, Torre
+from hanoi import Disk, Base, Torre
 from pygame.locals import *
 
 class Hanoi:
