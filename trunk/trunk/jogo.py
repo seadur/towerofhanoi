@@ -1,55 +1,158 @@
-import sys, pygame, pdb
+import sys, pygame
 from objects import disk, base, torre
+from pygame.locals import *
 
 class Hanoi:
-                        
-    def __init__(self):
+    """Jogo baseado em torres de hanoi.
+    
+    Este jogo tem a finalidade de estudo da biblioteca pygame
+    """
+    def __init__(self,nivel=4,width=800, height=600,cor = (255, 255, 255) ):
         pygame.init()
+        self.nivel = nivel
+        self.size = width, height
+        self.cor = cor
+        self.key = None
+        self.torre_atual = 1
 
-        size = width, height = 800, 600
-        cor = 255, 255, 255
-        self.screen = pygame.display.set_mode(size)
-        
-        self.piso = base()
+        #Criando objetos
+        print "Criando interface..."
+        self.screen = pygame.display.set_mode(self.size)
+        pygame.display.set_caption("Torre de Hanoi")
 
-        #Colocando a base no centro
-        self.piso.move(((size[0] / 2) - (self.piso.width / 2), size[1] - self.piso.height))
-        #base_speed[0] = (base_speed[0] / 2) - (baserect.width / 2)
-        #base_speed[1] = base_speed[1] - baserect.height
+        print "Criando piso..."
+        self.criar_piso()
         
-        self.screen.fill(cor)
+        print "Criando torres..."
+        self.criar_torres(n=3)
+        
+        print "Adicionando discos na torre do meio"
+        for ndisk in range(self.nivel,-1,-1):
+            self.torres[self.torre_atual].push(disk(ndisk))
+
+        #Imprimindo objetos na tela
+        self.monta_tela()
+
+    def monta_tela(self):
+        #Cor de fundo
+        self.screen.fill(self.cor)
+
+        #Exibe piso
         self.screen.blit(self.piso.picture, self.piso.rect)
-        
-        torres = [torre(numero = ntorres) for ntorres in range(3)]
-        for t in torres:
-            x = ((self.piso.width * (2 * t.numero - 2)) - 3 * t.width + 3 * size[0]) / 6
-            y = size[1] - self.piso.height - t.height
-            t.move((x, y))
+
+        #Exibe torres
+        for t in self.torres:
             self.screen.blit(t.picture, t.rect)
             
-        #centro = (baserect.width / 6) * 3 - (postrect[nrec].width / 2) + (size[0]-baserect.width)/2
-        #z = (x /6) * 3 - (y/2) + ((w-y)/2)
-        #z = (x /2)  - (y/2) + w/2 -y/2
-        #z = (x /2)  - y + w/2 
+            if t.numero == self.torre_atual:
+                #Seleciona disco da torre atual
+                d = self.torres[self.torre_atual].read()
+                if d:
+                    d.hover_picture()
+                
+            #Montando discos nas torre
+            self.monta_torre(t)
 
-        discos = [disk(ndisk) for ndisk in range(6,-1,-1)]
-        self.monta_torre(torres[1], discos)
+        
         pygame.display.flip()
+
+    def criar_piso(self):
+        self.piso = base()
+        #Colocando a base no centro
+        self.piso.move((self.size[0] / 2) - (self.piso.width / 2), self.size[1] - self.piso.height)
+
+    def criar_torres(self,n=3):
+        self.torres = [torre(nivel=self.nivel,numero = ntorres) for ntorres in range(n)]
+        for t in self.torres:
+            #Dividindo o espaco do piso em n pedacos para as torres
+            left = ((self.piso.width * (2 * t.numero - 2)) - n * t.width + n * self.size[0]) / 6
+            top = self.piso.y - t.height
+            t.move(left, top)
+
+    def monta_torre(self, torre, discos=[]):
+        """Monta os discos na torre"""
     
-    def monta_torre(self, torre, discos):
-        area = self.piso.y
+        #Remove todos os discos para colocar uma nova pilha de discos
+        while discos and torre.pop():
+            pass
+
+        #Adiciona os discos na torre
         for d in discos:
-            disk_position = torre.center()[0] - d.width / 2
-            altura = area - (len(discos) - (len(discos) - discos.index(d) - 1)) * d.height
-            d.move((disk_position, altura))
+            torre.push(d)
+            print "Adicionando: ",d
+
+        ds = torre.stack
+        for d in ds:
+            left = torre.center()[0] - d.width / 2
+            top = self.piso.y - (len(ds) - (len(ds) - ds.index(d) - 1)) * d.height
+            d.move(left, top)
             self.screen.blit(d.picture, d.rect)
-            torre.add_disk(d)
-                                        
+
+    def valida_torre_atual(self):
+        if self.torre_atual < 0: self.torre_atual = len(self.torres)-1
+        if self.torre_atual > len(self.torres)-1: self.torre_atual = 0
+
+    def move_torre(self,at):
+        self.valida_torre_atual()
+        d = self.torres[self.torre_atual].read()
+        print d,self.torres[at].read()
+        if d and d < self.torres[at].read() :
+            self.torre_atual = at
+        else:
+            d = self.torres[at].pop()
+            self.torres[self.torre_atual].push(d)
+
+    def move_prox_torre(self,at):
+        self.torre_atual += 1
+        self.move_torre(at)
+
+    def move_ante_torre(self,at):
+        self.torre_atual -= 1
+        print at,self.torre_atual
+        self.move_torre(at)
+    
+    def seleciona_prox_torre(self):
+        self.torre_atual += 1
+        self.valida_torre_atual()
+        if self.torres[self.torre_atual].num_elements == 0:
+            self.seleciona_prox_torre()
+
+    def seleciona_ante_torre(self):
+        self.torre_atual -= 1
+        self.valida_torre_atual()
+        if self.torres[self.torre_atual].num_elements == 0:
+            self.seleciona_ante_torre()
+
+    def game(self,k):
+        d = self.torres[self.torre_atual].read()
+        if d:
+            d.load_picture()
+            
+        if k == K_RIGHT:
+            self.move_prox_torre(self.torre_atual)
+
+        elif k == K_LEFT:
+            self.move_ante_torre(self.torre_atual)
+
+        elif k == K_UP:
+            self.seleciona_prox_torre()
+            
+        elif k ==  K_DOWN:
+            self.seleciona_ante_torre()
+
+        self.monta_tela()
+
     def run_game(self):
+        """ Main loop of game."""
+        
         while 1:
             for event in pygame.event.get():
-                if event.type == pygame.QUIT: sys.exit()
-           
+                if event.type == pygame.QUIT:
+                    sys.exit()
+                elif event.type == KEYUP:
+                    if event.key == K_RIGHT or event.key == K_LEFT \
+                       or event.key == K_UP or event.key == K_DOWN:
+                        self.game(event.key)
 if __name__ == '__main__':
     game = Hanoi()
     game.run_game()

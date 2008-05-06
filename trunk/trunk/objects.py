@@ -4,25 +4,22 @@
 """Gerenciador de objetos do jogo torre de hanoi
 
 Autor:
- - Bruno
+ - Bruno Santos <bsanto@gmail.com>
+ - Bruno Gomes <bgomes@s1solucoes.com.br>
 """
 import sys, pygame
 
 class base:
-    def __init__(self, posicao = (0,0)):
-        self.load_picture("images/base.gif")
-        self.posicao = posicao
-        
-    def get_picture(self):
-        return self.picture
-        
+    def __init__(self, top=0 , left=0 ,picture="images/base.gif"):
+        self.load_picture(picture)
+
     def load_picture(self, new_picture):
         self.picture = pygame.image.load(new_picture)
         self.rect = self.picture.get_rect()
 
-    def move(self,speed):
-        self.posicao = speed
-        self.rect = self.rect.move(speed)
+    def move(self,left,top):
+        self.rect.top = top
+        self.rect.left = left
         
     @property
     def width(self):
@@ -33,21 +30,19 @@ class base:
         return(self.rect.height)
 
     def get_x(self):
-        return(self.posicao[0])
+        return(self.rect.left)
         
     def move_x(self, value):
-        self.posicao[0] = value
-        self.rect = self.rect.move(self.speed)
+        self.rect.left = value
 
     x = property(get_x,move_x)
 
     def get_y(self):
-        return(self.posicao[1])
+        return(self.rect.top)
         
     def move_y(self, value):
-        self.posicao[1] = value
-        self.rect = self.rect.move(self.speed)
-
+        self.rect.top = value
+        
     y = property(get_y,move_y)
     
     def center(self):
@@ -62,61 +57,44 @@ class disk(base):
     gerencia diamentros, posicao x e y
     verifica se poder assumir possicao
     """
-    def __init__(self, diametro, posicao=(0,0)):
-        self.load_picture("images/disk0%s.gif" %diametro)
-        self.posicao = posicao
+    def __init__(self, diametro, left=0, top=0):
         self.diametro = diametro
+        base.__init__(self, left = left, top = top, picture="images/disk0%s.gif" % self.diametro)
 
     def __lt__(self, other):
-        return self.diametro < other.diametro    
-        
-class torre(base):
-    def __init__(self, numero, altura = 8, posicao = (0,0)):
-        self.load_picture("images/post.gif")
-        self.numero = numero
-        self.resize(altura)
-        self.posicao = posicao
-        self.stack = stack()
+        return self.diametro < other.diametro
     
-    def resize(self, altura):
-        self.picture = pygame.transform.scale(self.picture, (self.rect.width, self.rect.height * altura))
-        self.picture.convert()
-        self.rect = self.picture.get_rect()
-    
-    def add_disk(self, disk):
-        self.stack.push(disk)
-        
-    def remove_disk(self):
-        disk = self.stack.pop()
-        return disk
-        
-    def is_valid_disk(self, disk):
-        return (disk < self.stack.read())
-               
+    def __repr__(self):
+        return "Disk %s instance" % self.diametro
+
+    def load_picture(self,picture=None):
+        base.load_picture(self,"images/disk0%s.gif" %self.diametro)
+
+    def hover_picture(self):
+        base.load_picture(self,"images/disk0%s_h.gif" %self.diametro)
+
 class stack:
     def __init__(self):
           self.stack = []
 
-    def push(self, object):
-        self.stack.append(object)
+    def push(self, disk):
+        if disk:
+            self.stack.append(disk)
 
     def pop(self):
         if len(self.stack) == 0:
-            raise "Error", "stack is empty"
-        obj = self.stack[-1]
-        del self.stack[-1]
-        return obj
+            return False
+        return self.stack.pop()
         
     def read(self):
-        if not self.is_empty:
-            return self.stack[-1]
-        raise "Error", "stack is empty"
+        if len(self.stack) == 0:
+            return False
+        return self.stack[-1]
 
     def is_empty(self):
-        if len(self.stack) == 0:
-            return 1
-        return 0
+        return len(self.stack)
 
+    @property
     def num_elements(self):
         return len(self.stack)
 
@@ -126,4 +104,19 @@ class stack:
         fmt = "  %%%dd  %%s" % len(`n + 1`)
         for ix in xrange(n):
             print fmt % (n - ix, self.stack[ix])
-            
+
+class torre(stack,base):
+    def __init__(self, numero, nivel , left = 0, top =0):
+        stack.__init__(self)
+        base.__init__(self,left=left,top=top,picture="images/post.gif")
+        self.numero = numero
+        self.nivel = nivel+2
+        self.resize()
+    
+    def resize(self):
+        self.picture = pygame.transform.scale(self.picture, (self.width, self.height * self.nivel))
+        self.picture.convert()
+        self.rect = self.picture.get_rect()
+
+    def is_valid_disk(self, disk):
+        return (disk < self.read())
